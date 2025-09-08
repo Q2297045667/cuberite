@@ -3,21 +3,21 @@
 { # put the whole thing in a block so as not to behave weirdly if interrupted
 set -e
 
-# Global variables:
-# CHOICE_BUILDTYPE  - Either "Release" or "Debug".
-# CHOICE_THREADS    - A numerical value, the amount of threads to be used for the make command.
-# CHOICE_BRANCH     - The branch to use. Currently locked on "master".
-# STATE_INTERACTIVE - 1 If we're running interactively. 0 otherwise.
-# STATE_NEW         - Whether this is the first run. If 1, then no GIT repo exists yet. 0 otherwise.
+# 全局变量：
+# CHOICE_BUILDTYPE  - “Release” 或 “Debug”。
+# CHOICE_THREADS    - 数值，make 命令要使用的线程数。
+# CHOICE_BRANCH     - 要使用的分支。目前锁定为 “master”。
+# STATE_INTERACTIVE - 如果是交互式运行则为 1，否则为 0。
+# STATE_NEW         - 是否是首次运行。如果是 1，则尚未存在 GIT 仓库。否则为 0。
 
 # Constants:
 DEFAULT_BUILDTYPE="Release" # Other options: "Debug"
-DEFAULT_BRANCH="master"     # Other options: None currently
+DEFAULT_BRANCH="experimental"     # Other options: None currently
 DEFAULT_THREADS=1
 
 # Constants not modifiable through command line:
-UPSTREAM_REPO="origin"
-UPSTREAM_LINK="https://github.com/cuberite/cuberite.git"
+UPSTREAM_REPO="experimental"
+UPSTREAM_LINK="https://github.com/Q2297045667/cuberite.git"
 
 #=================== Error functions ===================
 
@@ -26,7 +26,7 @@ errorCompile ()
 {
 	echo
 	echoInt "-----------------"
-	echo "Compilation failed. Failed command:"
+	echo "编译失败。失败的命令:"
 	echo "$@"
 	exit 1
 }
@@ -35,7 +35,7 @@ errorGit ()
 {
 	echo
 	echoInt "-----------------"
-	echo "Code fetch failed. (Check your network connection). Failed command:"
+	echo "代码获取失败。（请检查你的网络连接）。失败的命令:"
 	echo "$@"
 	exit 2
 }
@@ -48,33 +48,33 @@ errorDependencies ()
 
 errorArguments ()
 {
-	echo "Usage: ./compile.sh [options]"
-	echo "Compiles Cuberite. Updates the GIT repository if needed, and downloads it if it does not exist."
-	echo "Runs interactively, unless one or more options are specified."
+	echo "用法：./compile.sh [选项]"
+	echo "编译 Cuberite。如果需要，会更新 GIT 仓库，如果仓库不存在，则会下载。"
+	echo "如果没有指定一个或多个选项，则以交互方式运行。"
 	echo
-	echo "options:"
-	echo "  -m  The compilation mode. Either \"Release\" or \"Debug\". Defaults to \"$DEFAULT_BUILDTYPE\""
-	echo '  -t  The number of threads to use for compiling'
-	echo "      If unspecified, a default of $DEFAULT_THREADS threads is used. The special value AUTO attempts to set the number of"
-	echo '      compilation threads equal to the number of CPU threads.'
-	echo '  -b  The branch to compile. (Currently unused and pinned to MASTER)'
-	echo '  -n yes: Prevent interactive mode. Unnecessary in combination with other arguments.'
-	echo '          Use without any other argument to build with the default settings.'
-	echo '  -d yes: Dry run. Print the chosen settings and exit'
+	echo "选项："
+	echo "  -m  编译模式。可以是\"Release\"或\"Debug\"。默认为\"$DEFAULT_BUILDTYPE\""
+	echo "  -t  编译时使用的线程数"
+	echo "      如果未指定，则默认使用$DEFAULT_THREADS个线程。"
+	echo "      特殊值AUTO会尝试将编译线程数设置为CPU线程数。"
+	echo "  -b  要编译的分支。（目前未使用，固定为MASTER）"
+	echo "  -n yes: 禁用交互模式。与其他参数组合时无需此选项。"
+	echo "          不与其他参数一起使用时，按默认设置进行构建。"
+	echo "  -d yes: 干运行。打印选定的设置并退出"
 	echo
-	echo "Usage examples:"
+	echo "使用示例："
 	echo "  ./compile.sh"
 	echo "  ./compile.sh -m Debug"
 	echo "  ./compile.sh -m Release -t 2"
 	echo
-	echo "Return codes: (non 0 returns are accompanied by useful stderr info)"
-	echo "0 - Success              - Success! Code was updated and compiled"
-	echo "1 - Compilation failed   - cmake, make, or source code issue"
-	echo "2 - Code fetch failed    - Network issue or, far more rarely, a git issue"
-	echo "3 - Dependencies missing - Some compilation tools are missing"
-	echo "4 - Bad arguments        - Bad commandline arguments were passed"
-	echo "5 - Bad user input       - Invalid user input in interactive mode"
-	echo "6 - other                - An error not listed above"
+	echo "返回代码：（非0返回值会附带有用的stderr信息）"
+	echo "0 - 成功              - 成功！代码已更新并编译"
+	echo "1 - 编译失败         - cmake、make或源代码问题"
+	echo "2 - 代码获取失败      - 网络问题或（极少数情况下）git问题"
+	echo "3 - 缺少依赖项       - 缺少某些编译工具"
+	echo "4 - 参数错误          - 传递了错误的命令行参数"
+	echo "5 - 用户输入错误      - 交互模式中输入了无效的用户输入"
+	echo "6 - 其他              - 上述未列出的错误"
 	exit 4
 }
 
@@ -82,7 +82,7 @@ errorInput ()
 {
 	echo
 	echoInt "-----------------"
-	echo "Unrecognized user input"
+	echo "未识别的用户输入"
 	echo "$@"
 	exit 5
 }
@@ -139,7 +139,7 @@ while getopts ":m:t:b:d:n:" name; do
 	b)
 		if [ ! -z "$CHOICE_BRANCH" ]; then errorArguments; fi # Argument duplication.
 		CHOICE_BRANCH=1 # Only used for dupe checking, overridden below.
-		echoErr "Warning: The -b option is currently unused, it was ignored"
+		echoErr "警告：当前未使用 -b 选项，该选项被忽略了"
 	;;
 	d)
 		if [ ! -z "$DRY_RUN" ]; then errorArguments; fi # Argument duplication.
@@ -174,25 +174,25 @@ elif [ -d cuberite ]; then # If there's a directory named "cuberite"...
 	if checkCuberiteDir; then # Check if we're in the Cuberite directory...
 		STATE_NEW=0
 	else
-		errorOther "A directory is named 'cuberite' which has no Cuberite assets exists. Please run the script elsewhere or move/delete that directory."
+		errorOther "存在一个名为 cuberite 的目录，但其中不存在任何 Cuberite 资源。请在其他位置运行脚本，或者移动/删除该目录"
 	fi
 
 fi
 
 if [ $STATE_NEW -eq 0 ]; then
-	echoInt "Cuberite repository detected. This should make the process faster, especially if you compiled before."
+	echoInt "检测到 Cuberite 仓库。这将加速整个编译过程，尤其是如果您之前已经编译过"
 fi
 
 # Echo: Greetings.
 echoInt "
 
-Hello, this script will download and compile Cuberite.
-On subsequent runs, it will update Cuberite.
-The compilation and download will occur in the current directory.
-If you're updating, you should run: <Path to Cuberite>/compile.sh
-Compiling from source takes time, but it usually generates faster
-executables. If you prefer ready-to-use binaries or if you want
-more info, please visit:  https://cuberite.org/"
+你好，这个脚本将下载并编译 Cuberite。
+在后续运行中，它将更新 Cuberite。
+编译和下载将在当前目录中进行。
+如果你正在更新，你应该运行：<Cuberite路径>/compile.sh
+从源代码编译需要时间，但它通常会生成更快的可执行文件。
+如果你更喜欢现成的二进制文件，或者想了解更多，
+请访问：https://cuberite.org/"
 
 doDependencyCheck()
 {
@@ -238,11 +238,11 @@ doDependencyCheck()
 	missingDepsExit ()
 	{
 		if [ "$1" != "" ]; then
-			echoErr "You can install the missing depndencies via:"
+			echoErr "你可以通过以下方式安装缺少的依赖项:"
 			echoErr "$1"
 		fi
 		echoErr
-		echoErr "Please install the dependencies, then come back."
+		echoErr "请安装依赖项，然后回来继续"
 		echoErr
 		errorDependencies
 	}
@@ -250,7 +250,7 @@ doDependencyCheck()
 	if [ "$MISSING_PACKAGES" != "" ]; then
 		echoInt
 		echoInt "-----------------"
-		echoErr "You have missing compilation dependencies:"
+		echoErr "缺少编译所需的依赖项:"
 		echoErr $MISSING_PACKAGES
 		echoErr
 
@@ -291,30 +291,34 @@ inactiveCode ()
 {
 
 echo "
-You can choose between 3 branches:
-* (S)Stable:   Choose the stable branch if you want the most
-               reliable server.
+你可以选择以下三个分支:
+* (S)稳定版:    如果你想使用最可靠的服务器
+               请选择稳定分支.
 
-* (T)Testing:  The testing branch is less stable,
-               but using it and reporting bugs helps us a lot!
+* (T)测试版:    测试分支的稳定性稍差,
+               但使用它并向我们报告问题对我们帮助很大！
 
-* (D)Dev:      The least stable of the three. (Master branch)
-               Choose the development branch if you want to try new,
-               bleeding-edge features.
+* (D)开发版:    三个分支中最不稳定的一个
+               （主分支）如果你想尝试新的、最新的功能,
+               请选择开发分支.
+* (E)实验性：    最新的，也是最不稳定的。
 "
 
 
-printf %s "Choose the branch (s/t/d): "
+printf %s "选择分支（s/t/d/e）: "
 read CHOICE_BRANCH
 case $CHOICE_BRANCH in
 	s|S)
-		errorOther "We don't have a stable branch yet, please use testing, sorry."
+		errorOther "我们还没有稳定分支，请使用测试分支，抱歉。"
 		;;
 	t|T)
 		CHOICE_BRANCH="testing"
 		;;
 	d|D)
 		CHOICE_BRANCH="master"
+		;;
+  e|E)
+		CHOICE_BRANCH="experimental"
 		;;
 	*)
 		errorInput
@@ -330,18 +334,17 @@ esac
 
 if [ $STATE_INTERACTIVE -eq 1 ]; then
 	echo "
-	Choose compile mode:
-	* (R)Release: Compiles normally.
-		      Generates the fastest build.
+	选择编译模式:
+	* (R)发布版: 正常编译。生成最快的构建版本。
 
-	* (D)Debug:   Compiles in debug mode.
-		      Makes your console and crashes more verbose.
-		      A bit slower than Release mode. If you plan to help
-		      development by reporting bugs, this is preferred.
+	* (D)调试版: 以调试模式编译。
+		      使你的控制台和崩溃信息更加详细。
+		      比发布模式稍慢。
+		      如果你计划通过报告错误来帮助开发，这是首选。
 
 	"
 
-	printf %s "Choose compile mode: (r/d) (Default: \"$DEFAULT_BUILDTYPE\"): "
+	printf %s "选择编译模式：(r/d)(默认: \"$DEFAULT_BUILDTYPE\"): "
 	read CHOICE_BUILDTYPE
 	case $CHOICE_BUILDTYPE in
 		d|D)
@@ -379,19 +382,19 @@ CPU_THREAD_COUNT=`numberOfThreads`
 
 if [ $STATE_INTERACTIVE -eq 1 ]; then
 	echo ""
-	echo "Choose the number of compilation threads."
+	echo "选择编译线程的数量"
 
 	if [ "$CPU_THREAD_COUNT" = "unknown" ]; then
-		echo "Could not detect the number of CPU threads."
+		echo "无法检测到 CPU 线程的数量"
 	elif [ "$CPU_THREAD_COUNT" -eq 1 ]; then
-		echo "You have 1 thread."
+		echo "你有 1 个线程"
 	else
-		echo "You have $CPU_THREAD_COUNT CPU threads."
+		echo "你有 $CPU_THREAD_COUNT 个 CPU 线程"
 	fi
 
-	echo "If you have enough RAM, it is wise to choose your CPU's thread count. "
-	echo "Otherwise choose lower. Old Raspberry Pis should choose 1. If in doubt, choose 1."
-	printf %s "Please enter the number of compilation threads to use (Default: $DEFAULT_THREADS): "
+	echo "如果你有足够的 RAM，选择与你的 CPU 线程数相同的线程数是明智的。 "
+	echo "否则请选择较低的线程数。旧款树莓派应该选择 1。如果不确定的话直接选择 1。"
+	printf %s "请输入要使用的编译线程数 (默认: $DEFAULT_THREADS): "
 	read CHOICE_THREADS
 fi
 
@@ -400,7 +403,7 @@ if [ -z "$CHOICE_THREADS" ] 2> /dev/null; then
 elif [ "$CHOICE_THREADS" = "AUTO" ] 2> /dev/null; then
 	if [ $CPU_THREAD_COUNT = "unknown" ]; then
 		CHOICE_THREADS="$DEFAULT_THREADS"
-		echo "WARNING: could not detect number of threads. Using the default ($DEFAULT_THREADS) ." >&2
+		echo "警告：无法检测到线程数。将使用默认值（$DEFAULT_THREADS）" >&2
 	else
 		CHOICE_THREADS="$CPU_THREAD_COUNT"
 	fi
@@ -412,38 +415,38 @@ fi
 
 
 if [ "$STATE_NEW" = 1 ]; then
-	previousCompilation="Not detected. We are assuming this is the first compile.sh run."
+	previousCompilation="未检测到。我们假设这是第一次运行 compile.sh"
 else
-	previousCompilation="Detected. This should make fetching and compiling faster."
+	previousCompilation="已检测到。这将使获取和编译过程更快"
 fi
 
 THREAD_WARNING=""
 if [ "$CPU_THREAD_COUNT" != "unknown" ] && [ "$CPU_THREAD_COUNT" -lt "$CHOICE_THREADS" ]; then
-	THREAD_WARNING=" - Warning: More threads assigned than there are CPU threads."
+	THREAD_WARNING=" - 警告：分配的线程数超过了CPU线程数"
 fi
 
 echo ""
-echoInt "#### Settings Summary ####"
-echo "Build Type:           " "$CHOICE_BUILDTYPE"
-echo "Branch:               " "$CHOICE_BRANCH" "(Currently the only choice)"
-echo "Compilation threads:  " "$CHOICE_THREADS$THREAD_WARNING"
-echo "CPU Threads:          " "$CPU_THREAD_COUNT"
-echo "Previous compilation: " "$previousCompilation"
-echo "Upstream Link:        " "$UPSTREAM_LINK"
-echo "Upstream Repo:        " "$UPSTREAM_REPO"
+echoInt "#### 设置摘要 ####"
+echo "构建类型：           " "$CHOICE_BUILDTYPE"
+echo "使用分支：           " "$CHOICE_BRANCH" "(目前唯一的选择)"
+echo "编译线程：           " "$CHOICE_THREADS$THREAD_WARNING"
+echo "核心数量：           " "$CPU_THREAD_COUNT"
+echo "上次数据：           " "$previousCompilation"
+echo "上游链接：           " "$UPSTREAM_LINK"
+echo "上游仓库：           " "$UPSTREAM_REPO"
 
 if [ "$DRY_RUN" = "yes" ]; then
-	echo "This is a dry run. Exiting now."
+	echo "这是一个比较运行"
 	exit 0;
 fi
 
 # Ask the user's permission to connect to the net.
 if [ $STATE_INTERACTIVE -eq 1 ]; then
 	echo
-	echo "After pressing ENTER, the script will connect to $UPSTREAM_LINK"
-	echo "to check for updates and/or fetch code. It will then compile your program."
-	echo "If you compiled before, make sure you're in the proper directory and that \"Previous compilation\" is detected."
-	printf $s "Press ENTER to continue... "
+	echo "按下ENTER键后，脚本将连接到 $UPSTREAM_LINK"
+	echo "以检查更新和/或获取代码。之后它将编译你的程序。"
+	echo "如果你之前编译过，请确保你在正确的目录中，并且 上次数据 被检测到。"
+	printf $s "按 ENTER 键继续... "
 	read dummy
 fi
 
@@ -452,24 +455,24 @@ fi
 
 
 echoInt
-echoInt " --- Downloading Cuberite's source code from the $CHOICE_BRANCH branch..."
+echoInt " --- 从 $CHOICE_BRANCH 分支下载 Cuberite 的源代码..."
 
 
 if [ $STATE_NEW -eq 1 ]; then
 	# Git: Clone.
-	echo " --- Looks like your first run, cloning the whole code..."
+	echo " --- 看起来这是你的第一次运行，正在克隆整个代码库..."
 	git clone  --depth 1 "$UPSTREAM_LINK" -b "$CHOICE_BRANCH" || errorGit "git clone  --depth 1 $UPSTREAM_LINK -b $CHOICE_BRANCH"
 	cd cuberite
 else
 	# Git: Fetch.
-	echo " --- Updating the $CHOICE_BRANCH branch..."
+	echo " --- 正在更新 $CHOICE_BRANCH 分支..."
 	git fetch "$UPSTREAM_REPO" "$CHOICE_BRANCH" || errorGit "git fetch $UPSTREAM_REPO $CHOICE_BRANCH"
 	git checkout "$CHOICE_BRANCH" || errorGit "git checkout $CHOICE_BRANCH"
 	git merge "$UPSTREAM_REPO"/"$CHOICE_BRANCH" || errorGit "git merge $UPSTREAM_REPO/$CHOICE_BRANCH"
 fi
 
 # Git: Submodules.
-echo " --- Updating submodules..."
+echo " --- 正在更新子模块..."
 git submodule sync
 git submodule update --init
 
@@ -478,14 +481,14 @@ git submodule update --init
 
 
 # Cmake.
-echo " --- Running cmake..."
+echo " --- 正在运行 cmake..."
 if [ ! -d build-cuberite ]; then mkdir build-cuberite; fi
 cd build-cuberite
 cmake .. -DCMAKE_BUILD_TYPE="$CHOICE_BUILDTYPE" || errorCompile "cmake .. -DCMAKE_BUILD_TYPE=$CHOICE_BUILDTYPE"
 
 
 # Make.
-echo " --- Compiling..."
+echo " --- 正在编译..."
 make -j "$CHOICE_THREADS" || errorCompile "make -j $CHOICE_THREADS"
 echo
 
@@ -496,17 +499,17 @@ echo
 cd Server
 echo
 echo "-----------------"
-echo "Compilation done!"
+echo "编译完成！"
 echo
-echo "Cuberite awaits you at:"
+echo "Cuberite 已准备好，位于:"
 echo "$PWD/Cuberite"
 
 cd ../..
 echo "
-You can always update Cuberite by executing:
+你可以随时通过执行以下命令来更新 Cuberite:
 $PWD/compile.sh
 
-Enjoy :)"
+祝你玩得开心 :)"
 exit 0
 
 
@@ -517,9 +520,9 @@ exit 0
 :windows_detected
 @echo off
 cls
-echo This script is not available for Windows yet, sorry.
-echo You can still download the Windows binaries from: https://cuberite.org/
-echo You can also manually compile for Windows. See: https://github.com/cuberite/cuberite
+echo “这个脚本目前还不支持Windows，抱歉。”
+echo “你仍然可以从以下网址下载Windows的二进制文件：https://cuberite.org/ ”
+echo “你也可以手动为Windows编译。详情请查看：https://github.com/cuberite/cuberite”
 rem windows_exit
 goto :EOF
 }
