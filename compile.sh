@@ -12,11 +12,11 @@ set -e
 
 # Constants:
 DEFAULT_BUILDTYPE="Release" # Other options: "Debug"
-DEFAULT_BRANCH="experimental"     # Other options: None currently
+DEFAULT_BRANCH="master"     # Other options: None currently
 DEFAULT_THREADS=1
 
 # Constants not modifiable through command line:
-UPSTREAM_REPO="experimental"
+UPSTREAM_REPO="origin"
 UPSTREAM_LINK="https://github.com/Q2297045667/cuberite.git"
 
 #=================== Error functions ===================
